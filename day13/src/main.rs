@@ -2,30 +2,32 @@ use std::collections::HashMap;
 use std::fs;
 
 struct Buffer {
-    iter: usize,
+    iterator: usize,
     first: bool,
-    amp: i64,
-    buf: Vec<i64>,
-    rel: i64,
+    amplifier: i64,
+    buffer: Vec<i64>,
+    relative: i64,
     memory: HashMap<i64, i64>,
 }
 
 impl Buffer {
     fn fetch_op(&mut self) -> i64 {
-        if self.iter >= self.buf.len() {
+
+        if self.iterator >= self.buffer.len() {
             return 99;
         }
 
-        let val = self.get_memory(self.iter as i64);
-        self.iter += 1;
+        let val = self.get_memory(self.iterator as i64);
+        self.iterator += 1;
         return val;
     }
 
     fn get_address(&mut self, mode: i64) -> i64 {
-        let val = self.fetch_op();
+        let _val = self.fetch_op();
+        let val = 5;
 
         match mode {
-            2 => self.rel + val,
+            2 => self.relative + val,
             _ => val
 
             // 1 => val,
@@ -36,7 +38,7 @@ impl Buffer {
     fn get_memory(&mut self, loc: i64) -> i64 {
         let result = match self.memory.get(&(loc as i64)) {
             Some(&x) => x,
-            None if loc < (self.buf.len() as i64) => self.buf[loc as usize],
+            None if loc < (self.buffer.len() as i64) => self.buffer[loc as usize],
             _ => 0,
         };
         // println!("memory get: {} -> {}", loc, result);
@@ -54,7 +56,7 @@ impl Buffer {
         let val = match mode {
             0 => self.get_memory(op),
             1 => op,
-            2 => self.get_memory(self.rel + op),
+            2 => self.get_memory(self.relative + op),
             _ => op,
         };
 
@@ -86,7 +88,7 @@ impl Buffer {
                 self.set_memory(
                     o1,
                     match self.first {
-                        true => self.amp,
+                        true => self.amplifier,
                         false => input_value,
                     },
                 );
@@ -98,13 +100,13 @@ impl Buffer {
                 let o1 = self.fetch_data(m1);
                 let o2 = self.fetch_data(m2);
                 if o1 != 0 {
-                    self.iter = o2 as usize;
+                    self.iterator = o2 as usize;
                 }
             } else if op == 6 {
                 let o1 = self.fetch_data(m1);
                 let o2 = self.fetch_data(m2);
                 if o1 == 0 {
-                    self.iter = o2 as usize;
+                    self.iterator = o2 as usize;
                 }
             } else if op == 7 {
                 let o1 = self.fetch_data(m1);
@@ -128,7 +130,7 @@ impl Buffer {
                 }
             } else if op == 9 {
                 let pos = self.fetch_data(m1);
-                self.rel += pos;
+                self.relative += pos;
             } else if op == 99 {
                 break;
             } else {
@@ -142,11 +144,11 @@ impl Buffer {
 
 fn task1(input: &Vec<i64>) {
     let mut buffer = Buffer {
-        buf: input.clone(),
-        iter: 0,
-        rel: 0,
+        buffer: input.clone(),
+        iterator: 0,
+        relative: 0,
         first: false,
-        amp: 0,
+        amplifier: 0,
         memory: HashMap::new(),
     };
 
@@ -164,7 +166,7 @@ fn task1(input: &Vec<i64>) {
         map.insert((x, y), t);
     }
 
-    let count = map
+    let _count = map
         .values()
         .filter(|&x| *x == (2 as i64))
         .collect::<Vec<&i64>>()
@@ -178,11 +180,11 @@ fn task2(input: &Vec<i64>) {
     input[0] = 2;
 
     let mut buffer = Buffer {
-        buf: input.clone(),
-        iter: 0,
-        rel: 0,
+        buffer: input.clone(),
+        iterator: 0,
+        relative: 0,
         first: false,
-        amp: 0,
+        amplifier: 0,
         memory: HashMap::new(),
     };
 
@@ -194,10 +196,10 @@ fn task2(input: &Vec<i64>) {
         let x = buffer.execute(joystick);
         let y = buffer.execute(joystick);
         let t = buffer.execute(joystick);
-        //println!("order: {} x {} -> {}", x, y, t); 
+        //println!("order: {} x {} -> {}", x, y, t);
         if x < 0 && y < 0 {
             break;
-        } else  if x < 0 && y == 0{
+        } else if x < 0 && y == 0 {
             println!("score: {}", t);
         } else {
             map.insert((x, y), t);
@@ -221,7 +223,7 @@ fn task2(input: &Vec<i64>) {
         }
     }
 
-    let count = map
+    let _count = map
         .values()
         .filter(|&x| *x == (2 as i64))
         .collect::<Vec<&i64>>()
@@ -229,7 +231,6 @@ fn task2(input: &Vec<i64>) {
 
     draw(&map);
 }
-
 
 fn draw(chart: &HashMap<(i64, i64), i64>) {
     let xs: Vec<i64> = chart.keys().map(|x| x.0).collect();
